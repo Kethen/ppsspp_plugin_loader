@@ -1,11 +1,12 @@
 #include <pspmodulemgr.h>
 
-#include <dirent.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "disc_ident.h"
 #include "logging.h"
+
+
 
 void load_and_start_plugins(){
 	char disc_id[128];
@@ -18,21 +19,34 @@ void load_and_start_plugins(){
 	}
 
 	char plugin_dir_path[512] = {0};
-	sprintf(plugin_dir_path, "ms0:/ppsspp_plugin_loader/%s", disc_id);
+	sprintf(plugin_dir_path, "ms0:/psp/ppsspp_plugin_loader/%s", disc_id);
 
-	DIR *plugin_dir = opendir(plugin_dir_path);
-	if(plugin_dir == NULL){
-		LOG("cannot open %s\n", plugin_dir_path);
+	SceUID plugin_dir = sceIoDopen(plugin_dir_path);
+	if(plugin_dir < 0){
+		LOG("cannot open directory %s, 0x%x\n", plugin_dir_path, plugin_dir);
 		return;
 	}
 
-	struct dirent *entry = NULL;
- 	while((entry = readdir(plugin_dir)) != NULL){
-		if(strcmp("..", entry->d_name) == 0){
+	while(1){
+		struct SceIoDirent entry = {0};
+		int directory_read_status = sceIoDread(plugin_dir, &entry);
+		if(directory_read_status == 0){
+			break;
+		}
+		if(directory_read_status < 0){
+			LOG("sceIoDread on %s failed, 0x%x\n", plugin_dir_path, directory_read_status);
+			break;
+		}
+
+		if(strcmp("..", entry.d_name) == 0){
 			continue;
 		}
+		if(strcmp(".", entry.d_name) == 0){
+			continue;
+		}
+
 		char plugin_path[512] = {0};
-		sprintf(plugin_path, "%s/%s", plugin_dir_path, entry->d_name);
+		sprintf(plugin_path, "%s/%s", plugin_dir_path, entry.d_name);
 		LOG("loading and starting %s\n", plugin_path);
 		SceUID plugin_load_status = sceKernelLoadModule(plugin_path, 0, NULL);
 		if(plugin_load_status < 0){
@@ -46,5 +60,8 @@ void load_and_start_plugins(){
 		}
 	}
 
-	closedir(plugin_dir);
+	int directory_close_status = sceIoDclose(plugin_dir);
+	if(directory_close_status < 0){
+		LOG("failed closing directory %s, 0x%x\n", plugin_dir_path, directory_close_status);
+	}
 }

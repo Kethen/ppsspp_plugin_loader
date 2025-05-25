@@ -9,7 +9,7 @@ BUILD_PRX = 1
 PRX_EXPORTS = exports.exp
 
 # use kernel "libc"
-#USE_KERNEL_LIBS = 1
+USE_KERNEL_LIBS = 1
 
 #LIBS =
 
