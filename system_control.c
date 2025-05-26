@@ -48,7 +48,7 @@ void run_handler(){
 	SceUID module_ids[128] = {0};
 	int num_module_ids = 0;
 
-	int module_id_list_get_status = sceKernelGetModuleIdList(module_ids, sizeof(module_ids) / sizeof(SceUID), &num_module_ids);
+	int module_id_list_get_status = sceKernelGetModuleIdList(module_ids, sizeof(module_ids), &num_module_ids);
 	if(sceKernelGetModuleIdList < 0){
 		LOG("failed fetching module id list, 0x%x\n", module_id_list_get_status);
 		return;
