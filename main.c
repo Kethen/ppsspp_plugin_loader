@@ -1,4 +1,4 @@
-#include <pspkernel.h>
+#include <pspthreadman.h>
 
 #include <string.h>
 
@@ -14,6 +14,8 @@ int module_start(SceSize args, void *argp){
 	init_logging();
 	LOG("module started\n");
 	load_and_start_plugins();
+	//XXX sceKernelStartThread seems a bit racy
+	sceKernelDelayThread(10000);
 	run_handler();
 	return 0;
 }
