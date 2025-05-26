@@ -1,12 +1,11 @@
 #include <pspmodulemgr.h>
+#include <psploadcore.h>
 
 #include <stdio.h>
 #include <string.h>
 
 #include "disc_ident.h"
 #include "logging.h"
-
-
 
 void load_and_start_plugins(){
 	char disc_id[128];
@@ -26,6 +25,8 @@ void load_and_start_plugins(){
 		LOG("cannot open directory %s, 0x%x\n", plugin_dir_path, plugin_dir);
 		return;
 	}
+
+	LOG("scanning %s for plugins\n", plugin_dir_path);
 
 	while(1){
 		struct SceIoDirent entry = {0};
@@ -63,5 +64,60 @@ void load_and_start_plugins(){
 	int directory_close_status = sceIoDclose(plugin_dir);
 	if(directory_close_status < 0){
 		LOG("failed closing directory %s, 0x%x\n", plugin_dir_path, directory_close_status);
+	}
+}
+
+void dump_module_info(){
+	SceUID module_ids[128] = {0};
+	int num_module_ids = 0;
+
+	LOG("dumping module info\n");
+
+	int module_id_list_get_status = sceKernelGetModuleIdList(module_ids, sizeof(module_ids) / sizeof(SceUID), &num_module_ids);
+	if(sceKernelGetModuleIdList < 0){
+		LOG("failed fetching module id list, 0x%x\n", module_id_list_get_status);
+		return;
+	}
+
+	for(int i = 0;i < num_module_ids;i++){
+		SceKernelModuleInfo module_info = {0};
+		module_info.size = sizeof(SceKernelModuleInfo);
+		int module_info_get_status = sceKernelQueryModuleInfo(module_ids[i], &module_info);
+		if(module_info_get_status != 0){
+			LOG("failed fetching module info for module %d, 0x%x\n", module_ids[i], module_info_get_status);
+			continue;
+		}
+
+		LOG("module #%d:\n"
+			" size :%d\n"
+			" nsegment: %d\n"
+			" reserved: 0x%02x 0x%02x 0x%02x\n"
+			" segmentaddr: 0x%x 0x%x 0x%x 0x%x\n"
+			" segmentsize: 0x%x 0x%x 0x%x 0x%x\n"
+			" entry_addr: 0x%x\n"
+			" gp_value: 0x%x\n"
+			" text_addr: 0x%x\n"
+			" text_size: 0x%x\n"
+			" data_size: 0x%x\n"
+			" bss_size: 0x%x\n"
+			" attribute: 0x%x\n"
+			" version: 0x%02x 0x%02x\n"
+			" name: %s\n",
+			i,
+			module_info.size,
+			module_info.nsegment,
+			module_info.reserved[0], module_info.reserved[1], module_info.reserved[2],
+			module_info.segmentaddr[0], module_info.segmentaddr[1], module_info.segmentaddr[2], module_info.segmentaddr[3],
+			module_info.segmentsize[0], module_info.segmentsize[1], module_info.segmentsize[2], module_info.segmentsize[3],
+			module_info.entry_addr,
+			module_info.gp_value,
+			module_info.text_addr,
+			module_info.text_size,
+			module_info.data_size,
+			module_info.bss_size,
+			module_info.attribute,
+			module_info.version[0], module_info.version[1],
+			module_info.name
+		);
 	}
 }

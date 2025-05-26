@@ -17,6 +17,8 @@ int module_start(SceSize args, void *argp){
 	//XXX sceKernelStartThread seems a bit racy
 	sceKernelDelayThread(10000);
 	run_handler();
+	sceKernelDelayThread(10000);
+	dump_module_info();
 	return 0;
 }
 

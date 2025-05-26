@@ -45,7 +45,7 @@ STMOD_HANDLER sctrlHENSetStartModuleHandler(STMOD_HANDLER new_handler){
 }
 
 void run_handler(){
-	SceUID module_ids[32] = {0};
+	SceUID module_ids[128] = {0};
 	int num_module_ids = 0;
 
 	int module_id_list_get_status = sceKernelGetModuleIdList(module_ids, sizeof(module_ids) / sizeof(SceUID), &num_module_ids);
@@ -80,9 +80,6 @@ void run_handler(){
 
 		// XXX hack, ppsspp's current text_addr seems off
 		module_info_2.text_addr -= 0x28;
-
-		char buffer[128] = {0};
-		memcpy(buffer, module_info.name, 27);
 
 		if(module_start_handler != NULL){
 			LOG("calling module_start_handler for %s\n", module_info_2.modname);
