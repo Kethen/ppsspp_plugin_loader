@@ -7,6 +7,7 @@
 
 #include "disc_ident.h"
 #include "logging.h"
+#include "system_control.h"
 
 void load_and_start_plugins(){
 	char disc_id[128];
@@ -126,13 +127,13 @@ void dump_module_info(){
 		);
 
 		#if 1
-		SceModule *module = sceKernelFindModuleByUID(module_ids[i]);
+		SceModule2 *module = (SceModule2 *)sceKernelFindModuleByUID(module_ids[i]);
 		if(module == NULL){
 			LOG("cannot fetch module for %d %s\n", module_ids[i], name_buf);
 		}else{
 			memcpy(name_buf, module->modname, 27);
 			LOG(
-				"SceModule:\n"
+				"SceModule2:\n"
 				" attribute: 0x%x\n"
 				" version: 0x%x 0x%x\n"
 				" modname: %s\n"
@@ -140,12 +141,14 @@ void dump_module_info(){
 				" unknown1: 0x%x\n"
 				" unknown2: 0x%x\n"
 				" modid: %d\n"
-				" unknown3: 0x%x 0x%x 0x%x 0x%x\n"
+				" unknown3: 0x%x 0x%x\n"
+				" mpid_text: 0x%x\n"
+				" mpid_data: 0x%x\n"
 				" ent_top: 0x%x\n"
 				" ent_size: 0x%x\n"
 				" stub_top: 0x%x\n"
 				" stub_size: 0x%x\n"
-				" unknown4: 0x%x 0x%x 0x%x 0x%x\n"
+				" unknown4: 0x%x 0x%x 0x%x 0x%x 0x%x\n"
 				" entry_addr: 0x%x\n"
 				" gp_value: 0x%x\n"
 				" text_addr: 0x%x\n"
@@ -162,12 +165,14 @@ void dump_module_info(){
 				module->unknown1,
 				module->unknown2,
 				module->modid,
-				module->unknown3[0], module->unknown3[1], module->unknown3[2], module->unknown3[3],
+				module->unknown3[0], module->unknown3[1],
+				(unsigned int)module->mpid_text,
+				(unsigned int)module->mpid_data,
 				(unsigned int)module->ent_top,
 				module->ent_size,
 				(unsigned int)module->stub_top,
 				module->stub_size,
-				module->unknown4[0], module->unknown4[1], module->unknown4[2], module->unknown4[3],
+				module->unknown4[0], module->unknown4[1], module->unknown4[2], module->unknown4[3], module->unknown4[4],
 				module->entry_addr,
 				module->gp_value,
 				module->text_addr,
