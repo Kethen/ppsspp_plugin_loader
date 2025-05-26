@@ -1,5 +1,6 @@
 #include <pspmodulemgr.h>
 #include <psploadcore.h>
+#include <pspthreadman.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -73,7 +74,7 @@ void dump_module_info(){
 
 	LOG("dumping module info\n");
 
-	int module_id_list_get_status = sceKernelGetModuleIdList(module_ids, sizeof(module_ids) / sizeof(SceUID), &num_module_ids);
+	int module_id_list_get_status = sceKernelGetModuleIdList(module_ids, sizeof(module_ids), &num_module_ids);
 	if(sceKernelGetModuleIdList < 0){
 		LOG("failed fetching module id list, 0x%x\n", module_id_list_get_status);
 		return;
@@ -88,10 +89,14 @@ void dump_module_info(){
 			continue;
 		}
 
-		LOG("module #%d:\n"
+		char name_buf[28] = {0};
+		memcpy(name_buf, module_info.name, 27);
+
+		LOG("module #%d %d:\n"
+			"SceKernelModuleInfo:\n"
 			" size :%d\n"
 			" nsegment: %d\n"
-			" reserved: 0x%02x 0x%02x 0x%02x\n"
+			" reserved: 0x%x 0x%x 0x%x\n"
 			" segmentaddr: 0x%x 0x%x 0x%x 0x%x\n"
 			" segmentsize: 0x%x 0x%x 0x%x 0x%x\n"
 			" entry_addr: 0x%x\n"
@@ -101,9 +106,9 @@ void dump_module_info(){
 			" data_size: 0x%x\n"
 			" bss_size: 0x%x\n"
 			" attribute: 0x%x\n"
-			" version: 0x%02x 0x%02x\n"
+			" version: 0x%x 0x%x\n"
 			" name: %s\n",
-			i,
+			i, module_ids[i],
 			module_info.size,
 			module_info.nsegment,
 			module_info.reserved[0], module_info.reserved[1], module_info.reserved[2],
@@ -117,7 +122,63 @@ void dump_module_info(){
 			module_info.bss_size,
 			module_info.attribute,
 			module_info.version[0], module_info.version[1],
-			module_info.name
+			name_buf
 		);
+
+		#if 1
+		SceModule *module = sceKernelFindModuleByUID(module_ids[i]);
+		if(module == NULL){
+			LOG("cannot fetch module for %d %s\n", module_ids[i], name_buf);
+		}else{
+			memcpy(name_buf, module->modname, 27);
+			LOG(
+				"SceModule:\n"
+				" attribute: 0x%x\n"
+				" version: 0x%x 0x%x\n"
+				" modname: %s\n"
+				" terminal: 0x%x\n"
+				" unknown1: 0x%x\n"
+				" unknown2: 0x%x\n"
+				" modid: %d\n"
+				" unknown3: 0x%x 0x%x 0x%x 0x%x\n"
+				" ent_top: 0x%x\n"
+				" ent_size: 0x%x\n"
+				" stub_top: 0x%x\n"
+				" stub_size: 0x%x\n"
+				" unknown4: 0x%x 0x%x 0x%x 0x%x\n"
+				" entry_addr: 0x%x\n"
+				" gp_value: 0x%x\n"
+				" text_addr: 0x%x\n"
+				" text_size: 0x%x\n"
+				" data_size: 0x%x\n"
+				" bss_size: 0x%x\n"
+				" nsegment: %d\n"
+				" segmentaddr: 0x%x 0x%x 0x%x 0x%x\n"
+				" segmentsize: 0x%x 0x%x 0x%x 0x%x\n",
+				module->attribute,
+				module->version[0], module->version[1],
+				name_buf,
+				module->terminal,
+				module->unknown1,
+				module->unknown2,
+				module->modid,
+				module->unknown3[0], module->unknown3[1], module->unknown3[2], module->unknown3[3],
+				(unsigned int)module->ent_top,
+				module->ent_size,
+				(unsigned int)module->stub_top,
+				module->stub_size,
+				module->unknown4[0], module->unknown4[1], module->unknown4[2], module->unknown4[3],
+				module->entry_addr,
+				module->gp_value,
+				module->text_addr,
+				module->text_size,
+				module->data_size,
+				module->bss_size,
+				module->nsegment,
+				module->segmentaddr[0], module->segmentaddr[1], module->segmentaddr[2], module->segmentaddr[3],
+				module->segmentsize[0], module->segmentsize[1], module->segmentsize[2], module->segmentsize[3]
+			);
+		}
+		#endif
 	}
 }

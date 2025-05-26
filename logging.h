@@ -22,7 +22,7 @@ void init_logging();
 			logfd = sceIoOpen("ef0:/PSP/" MODULE_NAME ".log", PSP_O_WRONLY|PSP_O_CREAT|PSP_O_APPEND, 0777); \
 		} \
 	} \
-	char _log_buf[256]; \
+	char _log_buf[1024]; \
 	int _log_len = sprintf(_log_buf, __VA_ARGS__); \
 	if(logfd >= 0){ \
 		if(_log_len != 0){ \
