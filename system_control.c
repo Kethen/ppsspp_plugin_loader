@@ -1,4 +1,5 @@
 #include <pspmodulemgr.h>
+#include <psploadcore.h>
 
 #include <string.h>
 
@@ -34,30 +35,21 @@ void run_handler(){
 			LOG("failed fetching module info for module %d, 0x%x\n", module_ids[i], module_info_get_status);
 			continue;
 		}
-		
-		SceModule2 module_info_2 = {0};
-		module_info_2.attribute = module_info.attribute;
-		memcpy(module_info_2.version, module_info.version, sizeof(char) * 2);
-		memcpy(module_info_2.modname, module_info.name, sizeof(char) * 27);
-		module_info_2.modid = module_ids[i];
-		module_info_2.entry_addr = module_info.entry_addr;
-		module_info_2.gp_value = module_info.gp_value;
-		module_info_2.text_addr = module_info.text_addr;
-		module_info_2.text_size = module_info.text_size;
-		module_info_2.data_size = module_info.data_size;
-		module_info_2.bss_size = module_info.bss_size;
-		module_info_2.nsegment = module_info.nsegment;
-		memcpy(module_info_2.segmentaddr, module_info.segmentaddr, sizeof(int) * 4);
-		memcpy(module_info_2.segmentsize, module_info.segmentsize, sizeof(int) * 4);
 
-		// XXX hack, ppsspp's current text_addr seems off
-		module_info_2.text_addr -= 0x28;
+		SceModule2 *module = (SceModule2 *) sceKernelFindModuleByUID(module_ids[i]);
+		if(module == NULL){
+			LOG("failed fetching module for module %d\n", module_ids[i]);
+			continue;
+		}
+
+		char module_name_buffer[28] = {0};
+		memcpy(module_name_buffer, module_info.name, 27);
 
 		if(module_start_handler != NULL){
-			LOG("calling module_start_handler for %s\n", module_info_2.modname);
-			module_start_handler(&module_info_2);
+			LOG("calling module_start_handler for %s\n", module_name_buffer);
+			module_start_handler(module);
 		}else{
-			LOG("module_start_handler is null, %s\n", module_info_2.modname);
+			LOG("module_start_handler is null, %s\n", module_name_buffer);
 		}
 	}
 }
