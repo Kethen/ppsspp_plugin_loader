@@ -20,11 +20,14 @@ int module_start(SceSize args, void *argp){
 	init_logging();
 	LOG("module started\n");
 	load_and_start_plugins();
-	//XXX sceKernelStartThread seems a bit racy
-	sceKernelDelayThread(10000);
+
+	// plugins might run sctrlHENSetStartModuleHandler on a thread...
+	sceKernelDelayThread(500000);
 	run_handler();
 
-	#if 0
+	#if 1
+	// XXX sceKernelStartThread seems a bit racy
+	sceKernelDelayThread(1000000);
 	SceUID thid = sceKernelCreateThread("dump_module_thread", dump_module_thread_func, 0x18, 0x10000, 0, NULL);
 	if(thid < 0){
 		LOG("failed creating module info dumping thread");
